@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('egg_sales', function (Blueprint $table) {
-            $table->id();
+        $table->id();
 	    $table->string('invoice_no', 30)->unique();
 	    $table->date('date');
 	    $table->foreignId('buyer_id')->constrained('buyers');
@@ -25,7 +25,7 @@ return new class extends Migration
         $table->enum('payment_status', ['paid', 'partial', 'unpaid', 'overdue'])->default('unpaid');
         $table->enum('status', ['draft', 'confirmed', 'shipped', 'completed', 'cancelled'])->default('draft');
         $table->text('notes')->nullable();
-        $table->foreignId('created_by')->nullable()->constrained('user')->nullOnDelete();
+        $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
         $table->timestamps();
         });
     }
