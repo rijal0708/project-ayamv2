@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('egg_sale_items', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('sale_id')->constrained('egg_sales')->cascadeOnDelete();
+            $table->enum('grade', ['A', 'B', 'C', 'Jumbo', 'cracked']);
+            $table->integer('quantity');
+            $table->decimal('unit_prize', 10, 2);
+            $table->decimal('subtotal', 10, 2)->default(0);
             $table->timestamps();
         });
     }
