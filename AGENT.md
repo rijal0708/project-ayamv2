@@ -39,19 +39,23 @@ Tabel yang **belum dibuat** (masih di PRD, belum ada migration): `egg_purchases`
 
 ## Progress Fitur (mengikuti Sprint di PRD)
 
-### ✅ Sprint 1 (sebagian) — Selesai
-- [x] Setup environment lengkap (PHP, MariaDB, Node, Laravel, Livewire, autentikasi dasar)
-- [x] Migration + Model untuk 6 tabel inti (lihat tabel di atas)
-- [x] CRUD Buyer lengkap: `Index` (list + hapus) dan `Form` (tambah/edit) — route `buyers.index`, `buyers.create`, `buyers.edit`, sudah tervalidasi jalan dengan data nyata
+### ✅ Sprint 1 — Selesai
+- [x] Setup environment lengkap (PHP 8.5, MariaDB, Node, Laravel 13, Livewire 4, autentikasi dasar)
+- [x] Migration + Model untuk 6 tabel inti (buyers, egg_inventories, egg_price_rules, egg_sales, egg_sale_items, payments)
+- [x] CRUD Buyer lengkap: `Index` (list + hapus) dan `Form` (tambah/edit) — route `buyers.index`, `buyers.create`, `buyers.edit`
+- [x] Halaman Stok Gudang (`egg_inventories`): tampilan saldo per grade, kartu stok/riwayat mutasi per tanggal
 
-### ⏳ Sprint 1 (lanjutan) — Belum
-- [ ] Halaman Stok Gudang (`egg_inventories`): tampilan saldo per grade (progress bar), kartu stok/riwayat mutasi
-- [ ] Integrasi auto stok masuk dari modul Produksi (belum ada modul produksi di project ini — cek dulu apakah sudah ada di project existing)
+### ✅ Sprint 2 (Tahap 1-2) — Selesai
+- [x] Form Transaksi Penjualan struktur dasar: pilih buyer → tambah/hapus item per grade → Qty & Harga
+- [x] Auto-isi harga dari `egg_price_rules` saat grade dipilih (query prioritas: harga khusus buyer → harga default)
+- [x] Hitung subtotal per item & total keseluruhan otomatis (pakai Livewire `#[Computed]`)
+- [x] Responsive (pakai `wire:model.live` untuk update langsung tanpa klik tombol)
+- [x] Handle edge case: field kosong tidak error (pakai conditional render di Blade)
 
-### ⏳ Sprint 2 — Belum
-- [ ] Form Transaksi Penjualan: pilih buyer → tambah item per grade → harga auto-fill dari `egg_price_rules` → hitung subtotal/total
-- [ ] Auto-generate `invoice_no` format `INV-{YYYYMMDD}-{SEQ}`
+### ⏳ Sprint 2 (Tahap 3) — Belum
 - [ ] Validasi stok cukup sebelum transaksi bisa disimpan
+- [ ] Auto-generate `invoice_no` format `INV-{YYYYMMDD}-{SEQ}`
+- [ ] Tombol Simpan transaksi
 - [ ] Auto-kurangi stok `egg_inventories` saat transaksi disimpan (qty_out)
 
 ### ⏳ Sprint 3 — Belum
@@ -75,13 +79,30 @@ Tabel yang **belum dibuat** (masih di PRD, belum ada migration): `egg_purchases`
 
 ## Catatan Debugging yang Sudah Dialami (biar tidak terulang)
 
-- Kalau ada error `Undefined variable` padahal kode `render()` sudah benar → kemungkinan besar **route cache atau view cache basi**. Jalankan `php artisan optimize:clear` dan cek juga `storage/framework/views/*` perlu dibersihkan manual kalau masih bandel.
-- Kalau `composer create-project` gagal karena `ext-iconv` → di Arch/CachyOS extension iconv sudah include di `php` core, tinggal uncomment `extension=iconv` di `/etc/php/php.ini`.
-- Jika ada folder sisa dari percobaan gagal (misal folder SFC `resources/views/components/...` dari percobaan awal) → hapus manual, jangan biarkan nyangkut karena bisa bikin konflik nama komponen.
-- Fish shell **tidak baca** `.bashrc`/`.zshrc`. Untuk menambah PATH permanen pakai `fish_add_path`, bukan `export`.
+- **Livewire 4 computed properties**: gunakan `#[Computed]` atribut, BUKAN pola lama `getXProperty()`. Harus import `use Livewire\Attributes\Computed;` di atas class.
+- **View cache yang sangat basi**: kalau `php artisan view:clear` tidak bekerja, coba `rm -rf storage/framework/views/*` manual. Kalau masih tidak hilang, gunakan `sudo rm -rf` dan pastikan permission folder `775` (`chmod -R 775 storage/framework/views`).
+- **Livewire component blank tanpa error**: bisa disebabkan fatal error PHP di file model yang di-autoload (misal missing trait import). Cek `storage/logs/laravel.log` untuk error tersembunyi.
+- **wire:model dynamic binding** (misal `wire:model="items.{{ $index }}.grade"`): syntax ini valid di Livewire 4. Gunakan `wire:model.live` untuk update langsung tanpa perlu trigger tombol lain.
+- **String * string error saat field kosong**: handle dengan conditional render di Blade (`@if($item['quantity']) ... @else Rp 0 @endif`) atau cast eksplisit `(float)` di kedua tempat (Blade & PHP).
+- **Fish shell** tidak baca `.bashrc`/`.zshrc`. Gunakan `fish_add_path` untuk tambah PATH permanen, atau `sudo pacman -S` untuk install.
+- **OPcache di dev environment**: kalau masalah cache tetap terjadi meskipun sudah clear, coba matikan dengan `php -d opcache.enable=0 artisan serve`.
 
-## TODO Langsung Berikutnya
+## TODO Langsung Berikutnya (Sprint 2 Tahap 3)
 
-1. Test CRUD Buyer secara menyeluruh (create, edit, delete) — pastikan validasi jalan
-2. Bangun halaman **Stok Gudang** (list saldo per grade + kartu mutasi stok)
-3. Bangun **Form Transaksi Penjualan** (bagian paling kompleks, kerjakan bertahap)
+### Langkah yang akan dikerjakan di session berikutnya:
+
+1. **Tambah method validasi & generate invoice di `Form.php`**:
+   - Method `generateInvoiceNo()`: query invoice terakhir hari ini, generate SEQ berikutnya
+   - Method `validateStok()`: pastikan setiap item cukup stok di `egg_inventories`
+   - Lifecycle hook untuk trigger validasi saat user klik Simpan
+
+2. **Tambah method `save()` di `Form.php`**:
+   - DB transaction besar: insert `egg_sales` header, insert setiap item ke `egg_sale_items`, insert ke `egg_inventory` (qty_out), auto-update buyer piutang
+   - Return redirect ke detail/list transaksi atau success message
+
+3. **Update Blade dengan tombol Simpan & error handling**:
+   - Tambah tombol "Simpan Transaksi" di bawah form
+   - Tampilkan validation error kalau stok kurang atau ada field wajib yang kosong
+   - Tampilkan success message setelah simpan
+
+4. **Test end-to-end**: buat transaksi → cek invoice nomor auto-generate → cek stok berkurang → cek data muncul di database

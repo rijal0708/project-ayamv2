@@ -46,7 +46,11 @@
                         <input type="number" wire:model.live="items.{{ $index }}.unit_price" class="border rounded p-1 w-28">
                     </td>
                     <td class="p-2">
-                        Rp {{ number_format($item['quantity'] * $item['unit_price'], 0, ',', '.') }}
+                        @if($item['quantity'] && $item['unit_price'])
+                            Rp {{ number_format((float) $item['quantity'] * (float) $item['unit_price'], 0, ',', '.') }}
+                        @else
+                            Rp 0
+                        @endif
                     </td>
                     <td class="p-2">
                         <button type="button" wire:click="removeItem({{ $index }})" class="text-red-600">Hapus</button>
