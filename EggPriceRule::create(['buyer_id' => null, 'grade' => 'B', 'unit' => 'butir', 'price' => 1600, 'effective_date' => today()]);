@@ -1,0 +1,12 @@
+[90m= [39m[34;4mApp\Models\EggPriceRule[39;24m {#8422
+    [34mbuyer_id[39m: [36mnull[39m,
+    [34mgrade[39m: [32m"[39m[32mA[39m[32m"[39m,
+    [34munit[39m: [32m"[39m[32mbutir[39m[32m"[39m,
+    [34mprice[39m: [35m1800[39m,
+    [34meffective_date[39m: [34;4mCarbon\CarbonImmutable @1785715200[39;24m {#7998
+      [34mdate[39m: [36m2026-08-03 00:00:00.0 UTC (+00:00)[39m,
+    },
+    [34mupdated_at[39m: [32m"[39m[32m2026-08-03 08:47:17[39m[32m"[39m,
+    [34mcreated_at[39m: [32m"[39m[32m2026-08-03 08:47:17[39m[32m"[39m,
+    [34mid[39m: [35m1[39m,
+  }
